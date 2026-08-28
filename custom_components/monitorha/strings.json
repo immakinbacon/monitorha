@@ -1,0 +1,51 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to the Infrastructure Monitor add-on",
+        "description": "Devices are configured in the add-on's own web interface. Open the add-on, expand 'Connection details for the Home Assistant integration' and copy the values from there.",
+        "data": {
+          "host": "Host",
+          "port": "Port",
+          "token": "API token"
+        },
+        "data_description": {
+          "host": "The add-on's hostname on the Supervisor network, shown in the add-on's web interface."
+        }
+      },
+      "hassio_confirm": {
+        "title": "Infrastructure Monitor add-on discovered",
+        "description": "Set up the integration for the add-on running at {host}? Devices are added and configured in the add-on's own web interface."
+      },
+      "reauth_confirm": {
+        "title": "Re-enter the add-on API token",
+        "description": "The add-on rejected the stored token. Reinstalling the add-on generates a new one; copy it from the add-on's web interface.",
+        "data": {
+          "token": "API token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the add-on. Check that it is running and that the host and port are correct.",
+      "invalid_auth": "The add-on rejected that API token.",
+      "unknown": "Unexpected error. Check the Home Assistant log for details."
+    },
+    "abort": {
+      "already_configured": "The add-on is already connected.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Polling",
+        "data": {
+          "scan_interval": "Read interval"
+        },
+        "data_description": {
+          "scan_interval": "How often Home Assistant reads the add-on's data. The add-on polls the monitored devices themselves on the schedule set per device in its web interface, so this can stay short."
+        }
+      }
+    }
+  }
+}

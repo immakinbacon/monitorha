@@ -1,0 +1,394 @@
+/* Ingress renders this inside the Home Assistant frame, so the palette follows
+   the user's light/dark preference rather than assuming either. */
+
+:root {
+  --bg: #f4f5f7;
+  --card: #ffffff;
+  --text: #1c1c1e;
+  --muted: #6b7280;
+  --line: #e2e4e8;
+  --accent: #03a9f4;
+  --good: #2e9b52;
+  --warn: #e08600;
+  --bad: #d33a2c;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131417;
+    --card: #1e2024;
+    --text: #e8eaed;
+    --muted: #9aa0a6;
+    --line: #32353b;
+    --good: #58c877;
+    --warn: #f0ad3e;
+    --bad: #ef5a4c;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+h1 { margin: 0; font-size: 1.4rem; font-weight: 600; }
+.subtitle { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
+
+/* Wide enough for a reading name and its value to sit on one line on a node
+   carrying dozens of disks, without the value drifting a screen away. */
+main { max-width: 1280px; margin: 0 auto; padding: 24px 16px 64px; }
+
+.summary {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--line);
+}
+.stat.good { border-left-color: var(--good); }
+.stat.warn { border-left-color: var(--warn); }
+.stat.bad { border-left-color: var(--bad); }
+.stat-value { font-size: 1.9rem; font-weight: 600; line-height: 1.1; }
+.stat-label { color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+
+.sources { display: grid; gap: 14px; }
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.card-title { font-size: 1.1rem; font-weight: 600; }
+.card-meta { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.card-meta code { color: var(--muted); font-size: 0.82rem; }
+.badge {
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 1px 10px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+/* Pending updates read as a state of the device, not as a label for it, so
+   the badge takes the warning colour and drops the uppercase styling. */
+.badge.update {
+  background: transparent;
+  border-color: var(--warn);
+  color: var(--warn);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.75rem;
+}
+.card-status { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; max-width: 100%; }
+/* Backend errors can be long; keep them on one line with the full text in the
+   tooltip rather than letting them reflow the card. */
+.status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 46ch;
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; background: var(--muted); }
+.dot.good { background: var(--good); }
+.dot.bad { background: var(--bad); }
+.dot.off { background: var(--muted); }
+
+.card-stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 14px 0 4px; }
+.card-stats div { display: flex; flex-direction: column; }
+.card-stats strong { font-size: 1.05rem; font-weight: 600; }
+.card-stats span { color: var(--muted); font-size: 0.78rem; }
+
+.card-actions, .modal-actions, .topbar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.modal-actions { justify-content: flex-end; margin-top: 20px; }
+.topbar-actions { margin-top: 0; }
+
+.btn {
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.danger { color: var(--bad); }
+.btn.small { padding: 4px 10px; font-size: 0.78rem; }
+
+.banner {
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  background: var(--bad);
+  color: #fff;
+}
+.banner.good { background: var(--good); }
+.hidden { display: none !important; }
+
+.empty {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 44px 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.empty p { color: var(--muted); margin: 0 0 16px; }
+
+/* -- detail view ------------------------------------------------------- */
+
+.detail-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.detail-title { flex: 1; min-width: 220px; }
+.detail-title h2 { margin: 0; font-size: 1.3rem; font-weight: 600; }
+
+.filter {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  margin-bottom: 16px;
+}
+
+.device {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+  margin-bottom: 12px;
+  /* Reserved on every device so a nested one does not shift by 3px when its
+     rule appears. */
+  border-left: 3px solid transparent;
+}
+/* Depth used to be an indent, which made a guest narrower than the node it
+   hangs off and stepped the reading tables out of alignment. A rule down the
+   left edge says the same thing while every box keeps the full width. */
+.device.nested {
+  border-left-color: var(--accent);
+  padding-left: calc(18px + (var(--depth) - 1) * 14px);
+}
+.device-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.device-head h3 { margin: 0; font-size: 1rem; font-weight: 600; }
+.device-meta { color: var(--muted); font-size: 0.8rem; }
+
+.readings { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.readings tr { border-top: 1px solid var(--line); }
+.readings tr:first-child { border-top: none; }
+.readings td { padding: 6px 0; vertical-align: top; }
+.readings .k { color: var(--muted); padding-right: 16px; }
+.readings .v { text-align: right; font-variant-numeric: tabular-nums; }
+/* Present, but not created in Home Assistant unless the user enables it. */
+.off-by-default .k { opacity: 0.65; }
+
+/* Every monitor line opens its own mute/threshold settings. */
+.monitor-row { cursor: pointer; }
+.monitor-row:hover, .monitor-row:focus-visible {
+  background: var(--bg);
+  outline: none;
+}
+.monitor-row:focus-visible { box-shadow: inset 2px 0 0 var(--accent); }
+/* Muted lines stay visible — they still report a real state — but recede. */
+.monitor-row.muted .k, .monitor-row.muted .v { opacity: 0.5; }
+.monitor-row.sev-warning .v { color: var(--warn); }
+.monitor-row.sev-critical .v { color: var(--bad); }
+
+/* Says what the problem actually is, under the monitor's name. */
+.reason {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  color: var(--warn);
+}
+.monitor-row.sev-critical .reason { color: var(--bad); }
+
+/* Event log: a dense, scannable list rather than cards. */
+.events-table td { padding: 8px 0; }
+.events-table .ev-when {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding-right: 14px;
+  vertical-align: middle;
+}
+.events-table .ev-kind { white-space: nowrap; padding-right: 14px; vertical-align: middle; }
+.events-table .ev-what { vertical-align: middle; }
+.events-table .ev-what strong { font-weight: 600; }
+.events-table .ev-where {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.events-table .ev-why {
+  text-align: right;
+  color: var(--muted);
+  font-size: 0.8rem;
+  vertical-align: middle;
+  padding-left: 14px;
+}
+
+.monitor-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0 0 12px;
+  font-size: 0.85rem;
+}
+.monitor-facts dt { color: var(--muted); }
+.monitor-facts dd { margin: 0; }
+.monitor-reason {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-left: 3px solid var(--warn);
+  background: var(--bg);
+  font-size: 0.85rem;
+}
+.section-head {
+  margin: 16px 0 4px;
+  font-size: 0.9rem;
+}
+
+.chip {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+.chip.good { color: var(--good); border-color: var(--good); }
+.chip.warn { color: var(--warn); border-color: var(--warn); }
+.chip.bad { color: var(--bad); border-color: var(--bad); }
+
+.tag {
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+/* -- editor ------------------------------------------------------------ */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  z-index: 10;
+}
+.modal-card {
+  background: var(--card);
+  border-radius: 14px;
+  padding: 24px;
+  width: 100%;
+  max-width: 560px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+.modal-card h2 { margin: 0 0 18px; font-size: 1.15rem; }
+
+.field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.field > span { font-size: 0.82rem; color: var(--muted); }
+.field input, .field select {
+  padding: 9px 11px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-family: inherit;
+}
+.row { display: flex; gap: 12px; }
+.row .grow { flex: 1; }
+.row .port { width: 110px; }
+
+.checks { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 4px 0 8px; }
+.check { display: flex; align-items: center; gap: 7px; font-size: 0.85rem; cursor: pointer; }
+
+.editor-message { font-size: 0.85rem; margin: 10px 0 0; }
+.editor-message.good { color: var(--good); }
+.editor-message.bad { color: var(--bad); }
+
+/* -- token panel ------------------------------------------------------- */
+
+.token-panel {
+  margin-top: 28px;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 14px 18px;
+  box-shadow: var(--shadow);
+}
+.token-panel summary { cursor: pointer; font-size: 0.9rem; }
+.hint { color: var(--muted); font-size: 0.82rem; }
+.token-grid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 18px;
+  margin: 12px 0 0;
+  font-size: 0.85rem;
+}
+.token-grid dt { color: var(--muted); }
+.token-grid dd { margin: 0; }
+.token-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.token-row code { word-break: break-all; font-size: 0.8rem; }

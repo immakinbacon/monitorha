@@ -1,0 +1,14 @@
+{
+  "domain": "monitorha",
+  "name": "Infrastructure Monitor",
+  "codeowners": ["@immakinbacon"],
+  "config_flow": true,
+  "dependencies": ["http"],
+  "after_dependencies": ["hassio"],
+  "documentation": "https://github.com/immakinbacon/monitorha",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/immakinbacon/monitorha/issues",
+  "requirements": [],
+  "version": "0.11.1"
+}

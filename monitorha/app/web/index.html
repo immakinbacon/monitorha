@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Infrastructure Monitor</title>
+    <link rel="stylesheet" href="static/style.css?v=__VERSION__" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <h1>Infrastructure Monitor</h1>
+        <p class="subtitle">
+          MikroTik routers and switches, Proxmox hosts and Redfish BMCs
+          <span id="version" class="tag"></span>
+        </p>
+      </div>
+      <div class="topbar-actions">
+        <button id="show-events" class="btn">Event log</button>
+        <button id="add-source" class="btn primary">Add device</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="banner" class="banner hidden"></div>
+
+      <div id="list-view">
+        <section id="summary" class="summary"></section>
+        <section id="sources" class="sources"></section>
+      </div>
+
+      <div id="detail-view" class="hidden"></div>
+
+      <div id="events-view" class="hidden"></div>
+
+      <details class="token-panel">
+        <summary>Connection details for the Home Assistant integration</summary>
+        <p class="hint">
+          The integration is normally discovered automatically. If you need to add
+          it by hand, use these values.
+        </p>
+        <dl class="token-grid">
+          <dt>Host</dt><dd id="conn-host">the add-on's hostname</dd>
+          <dt>Port</dt><dd>8099</dd>
+          <dt>API token</dt>
+          <dd class="token-row">
+            <code id="api-token">…</code>
+            <button id="copy-token" class="btn small">Copy</button>
+          </dd>
+        </dl>
+      </details>
+    </main>
+
+    <!-- Add / edit device -->
+    <div id="editor" class="modal hidden">
+      <div class="modal-card">
+        <h2 id="editor-title">Add device</h2>
+        <form id="editor-form">
+          <input type="hidden" name="id" />
+
+          <label class="field">
+            <span>Device type</span>
+            <select name="type" id="field-type" required>
+              <option value="mikrotik">MikroTik (RouterOS v7)</option>
+              <option value="swos">MikroTik switch (SwOS / SwOS Lite)</option>
+              <option value="proxmox">Proxmox VE</option>
+              <option value="redfish">Supermicro / Redfish BMC</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>Name</span>
+            <input name="name" placeholder="Shown in Home Assistant" />
+          </label>
+
+          <div class="row">
+            <label class="field grow">
+              <span>Host</span>
+              <input name="host" required
+                     placeholder="192.0.2.10 or bmc.example.internal" />
+            </label>
+            <label class="field port">
+              <span>Port</span>
+              <input name="port" type="number" min="1" max="65535" />
+            </label>
+          </div>
+
+          <!-- Proxmox scope -->
+          <div class="row only-proxmox">
+            <label class="field grow">
+              <span>Monitor</span>
+              <select name="scope" id="field-scope">
+                <option value="node">This node only</option>
+                <option value="cluster">The whole cluster</option>
+              </select>
+            </label>
+            <label class="field grow only-node-scope">
+              <span>Node name</span>
+              <input name="node" placeholder="auto-detect" />
+            </label>
+          </div>
+
+          <!-- Proxmox auth selector -->
+          <label class="field only-proxmox">
+            <span>Authentication</span>
+            <select name="auth_method" id="field-auth">
+              <option value="token">API token (recommended)</option>
+              <option value="password">Username and password</option>
+            </select>
+          </label>
+
+          <div class="row only-token">
+            <label class="field grow">
+              <span>Token ID</span>
+              <input name="token_id" placeholder="monitoring@pve!homeassistant" />
+            </label>
+          </div>
+          <label class="field only-token">
+            <span>Token secret</span>
+            <input name="token_secret" type="password" placeholder="leave blank to keep" />
+          </label>
+
+          <div class="row only-userpass">
+            <label class="field grow">
+              <span>Username</span>
+              <input name="username" />
+            </label>
+            <label class="field grow">
+              <span>Password</span>
+              <input name="password" type="password" placeholder="leave blank to keep" />
+            </label>
+          </div>
+
+          <div class="row">
+            <label class="field grow">
+              <span>Poll interval (s)</span>
+              <input name="scan_interval" type="number" min="10" max="3600" />
+            </label>
+            <label class="field grow">
+              <span>Deep poll interval (s)</span>
+              <input name="slow_scan_interval" type="number" min="60" max="86400" />
+            </label>
+          </div>
+
+          <label class="field only-redfish">
+            <span>Power switch off action</span>
+            <select name="power_off_action">
+              <option value="graceful">Ask the operating system to shut down</option>
+              <option value="force">Cut power immediately</option>
+            </select>
+          </label>
+
+          <div class="checks">
+            <label class="check">
+              <input type="checkbox" name="verify_ssl" />
+              <span>Verify SSL certificate</span>
+            </label>
+            <label class="check only-mikrotik">
+              <input type="checkbox" name="use_ssl" />
+              <span>Use HTTPS</span>
+            </label>
+            <label class="check only-mikrotik">
+              <input type="checkbox" name="monitor_interfaces" />
+              <span>Monitor interfaces</span>
+            </label>
+            <label class="check only-mikrotik">
+              <input type="checkbox" name="monitor_tunnels" />
+              <span>Monitor VPN tunnels</span>
+            </label>
+            <label class="check only-mikrotik">
+              <input type="checkbox" name="monitor_netwatch" />
+              <span>Monitor netwatch</span>
+            </label>
+            <label class="check only-swos">
+              <input type="checkbox" name="monitor_ports" />
+              <span>Monitor ports</span>
+            </label>
+            <label class="check only-swos">
+              <input type="checkbox" name="monitor_poe" />
+              <span>Monitor PoE</span>
+            </label>
+            <label class="check only-swos">
+              <input type="checkbox" name="monitor_sfp" />
+              <span>Monitor SFP modules</span>
+            </label>
+            <label class="check only-swos">
+              <input type="checkbox" name="check_firmware" />
+              <span>Check for firmware updates</span>
+            </label>
+            <label class="check only-proxmox">
+              <input type="checkbox" name="monitor_guests" />
+              <span>Monitor guests</span>
+            </label>
+            <label class="check only-proxmox">
+              <input type="checkbox" name="monitor_backups" />
+              <span>Monitor backups</span>
+            </label>
+            <label class="check only-proxmox">
+              <input type="checkbox" name="monitor_interfaces" />
+              <span>Monitor interfaces</span>
+            </label>
+            <label class="check">
+              <input type="checkbox" name="enabled" />
+              <span>Enabled</span>
+            </label>
+          </div>
+
+          <p id="editor-message" class="editor-message hidden"></p>
+
+          <div class="modal-actions">
+            <button type="button" id="editor-cancel" class="btn">Cancel</button>
+            <button type="button" id="editor-test" class="btn">Test connection</button>
+            <button type="submit" class="btn primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="monitor" class="modal hidden">
+      <div class="modal-card">
+        <h2 id="monitor-title">Monitor</h2>
+        <dl class="monitor-facts">
+          <dt>Key</dt><dd><code id="monitor-key"></code></dd>
+          <dt>Current</dt><dd id="monitor-value"></dd>
+        </dl>
+        <p id="monitor-reason" class="monitor-reason hidden"></p>
+
+        <form id="monitor-form">
+          <div class="checks">
+            <label class="check">
+              <input type="checkbox" name="muted" />
+              <span>Ignore this monitor</span>
+            </label>
+          </div>
+          <p class="hint">
+            A muted monitor keeps its Home Assistant entity and its real state,
+            but raises no events and is left out of the problem rollup.
+          </p>
+
+          <div id="monitor-thresholds">
+            <h3 class="section-head">Thresholds</h3>
+            <p class="hint">
+              Leave a box empty to not use that bound. An event fires when the
+              value moves into a different band, not on every poll.
+            </p>
+            <div class="row">
+              <label class="field grow">
+                <span>Warn above</span>
+                <input type="number" step="any" name="warn_above" />
+              </label>
+              <label class="field grow">
+                <span>Critical above</span>
+                <input type="number" step="any" name="critical_above" />
+              </label>
+            </div>
+            <div class="row">
+              <label class="field grow">
+                <span>Warn below</span>
+                <input type="number" step="any" name="warn_below" />
+              </label>
+              <label class="field grow">
+                <span>Critical below</span>
+                <input type="number" step="any" name="critical_below" />
+              </label>
+            </div>
+          </div>
+          <p id="monitor-no-thresholds" class="hint hidden">
+            Thresholds apply to numeric monitors only.
+          </p>
+
+          <p id="monitor-message" class="editor-message hidden"></p>
+
+          <div class="modal-actions">
+            <button type="button" id="monitor-cancel" class="btn">Cancel</button>
+            <button type="button" id="monitor-reset" class="btn">Reset</button>
+            <button type="submit" class="btn primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="static/app.js?v=__VERSION__"></script>
+  </body>
+</html>
